@@ -24,3 +24,4 @@ L_sun = 3.9e33        # solar luminosity (CGS)
 au = 1.496e13         # astronomical unit
 mJy = 1e-26           # mJy to cgs  
 mas_to_rad = 1e-3/206265 # convert milliarcsec to radians
+nsc = 1e15

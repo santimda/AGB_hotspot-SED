@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import numpy as np
+from scipy.integrate import trapz
 
 from constants import *
 
@@ -13,12 +14,29 @@ def nBB(nu, norm, T):
     nu = frequency in 1e15 Hz (IT MUST BE CONSISTENT WITH THE nsc PARAMETER!!!)
     T = temperature in Kelvin
     '''
-    h = 6.6260755e-27
-    c = 2.99792458e10
-    k = 1.380658e-16
-    #Transform to cgs
-    nu2 = nu * 1e15  
+    nu2 = nu * nsc  
     return norm * 2. * h * (nu2**3/c**2) / ( np.exp(h*nu2/k_B/T) - 1. )
+
+
+def get_norm_nBB(R, T):
+    nu0 = (k_B * T) / h # Characteristic frequency for BB emission
+    nu_min =  nu0 / 300.
+    nu_max = nu0 * 1e2
+    nu = np.geomspace( nu_min, nu_max, 300 )
+
+    L_norm = nBB(nu/nsc, 1.0, T)
+    # Get the normalization just that integral L_E(E) dE = 4 pi R^2 sigma T^4 --> norm = ()/integral 
+    integral = trapz(L_norm, nu) 
+    norm = (4.0 * np.pi * R**2 * sigma_SB * T**4) / integral
+    return norm 
+
+
+def S_BB(nu, R, T, D):
+    '''Returns the SED in mJy'''
+    norm = get_norm_nBB(R, T)
+    L = nBB(nu, norm, T)
+    S = L / (4.0 * np.pi * D**2) / mJy
+    return S
 
 
 def Snu_to_TB(S_nu, nu, Omega_s, Omega_b):
