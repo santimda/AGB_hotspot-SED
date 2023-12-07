@@ -68,10 +68,7 @@ def S_ff(nu, R, D, Te, n, H=None):
     ps = [2 * n**2 * H * f for f in fs] # Eq. 10
     Snu = []
     for i in range(m):
-        if ps[i] > 1e-3:
-            opac = 1. - np.exp(-ps[i])
-        else:
-            opac = ps[i]
+        opac = 1. - np.exp(-ps[i]) if ps[i] > 1e-3 else ps[i] 
 #         S = cte_Snu * nu[i]**2 * opac * Jy # Eq. 11 Olnon 1975 for sphere (in Jy)
         cte_Snu = nBB(nu[i]/nsc, np.pi*R**2/(D**2), Te)
         S = cte_Snu * opac / Jy # Eq. 11 Olnon 1975 for sphere (in Jy)
@@ -103,6 +100,13 @@ def CircumstellarDustExtinction(Snu_start,nu,Mdot_dust,vExp,Rin,Rout,kappaFile, 
     
     N_dust = Mdot_dust/(2*np.pi*vExp)*((1.0/Rin) - (1.0/Rout)) #in g/cm^2
     tau  = kappa * N_dust
-    Snu_out = Snu_start * np.exp(-tau)
+    Snu_out = Snu_start * np.exp(-tau) 
     
     return Snu_out
+
+
+def S_ff_abs(nu, R, D, Te, n, H, Mdot_dust, vExp, Rin, Rout, kappaFile):
+    '''Free-free spectrum corrected for dust absorption'''
+    Snu_ff = S_ff(nu, R, D, Te, n, H)
+    Snu_abs = CircumstellarDustExtinction(Snu_ff, nu, Mdot_dust, vExp, Rin, Rout, kappaFile) 
+    return Snu_abs
