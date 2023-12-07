@@ -16,6 +16,7 @@ sigma_T = 6.6524e-25  # Thomson cross-section for e-
 q_e = 4.803204e-10    # electron charge
 sigma_SB = 5.6705e-5   # Stephan-Boltzmann's constant 
 pc = 3.0857e18        # cm
+kpc = 1e3 * pc        # cm
 yr = 31556926         # 1 yr in seconds
 M_sun = 1.989e33
 M_sun_yr = M_sun/yr   
