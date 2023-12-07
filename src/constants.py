@@ -22,6 +22,7 @@ M_sun_yr = M_sun/yr
 R_sun = 6.96e10       # solar radius 
 L_sun = 3.9e33        # solar luminosity (CGS)
 au = 1.496e13         # astronomical unit
+Jy = 1e-23           # mJy to cgs  
 mJy = 1e-26           # mJy to cgs  
 mas_to_rad = 1e-3/206265 # convert milliarcsec to radians
 nsc = 1e15
