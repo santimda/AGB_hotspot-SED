@@ -49,14 +49,13 @@ def S_BB(nu, R, T, D):
     return S
 
 
-def tau_ff(nu, R, D, Te, n, H=None):
+def tau_ff(nu, R, Te, n, H=None):
     '''Free-free opacity for an homogeneous cylindrical region assuming n_i = n_e = n.
     Formulae in Olnon 1975 ( https://articles.adsabs.harvard.edu/pdf/1975A%26A....39..217O )
     
     Input:
     nu = frequency in Hz
     R = source size in cm
-    D = source distance in cm
     Te = electron temperature in Kelvin
     n = gas density in cm^-3
     H = linear depth of the source in cm (default: 0.1*R)
@@ -92,7 +91,7 @@ def S_ff(nu, R, D, Te, n, H=None):
 
     # Calculate the transmission for a given opacity 
     # ("transmission" = slab that is both emitting and absorbing)
-    tau = tau_ff(nu, R, D, Te, n, H)
+    tau = tau_ff(nu, R, Te, n, H)
     opac = np.where(tau > 1e-3, 1.0 - np.exp(-tau), tau)
 
     # Calculate the BB emission and correct for the effective opacity/transmission
@@ -101,29 +100,36 @@ def S_ff(nu, R, D, Te, n, H=None):
     return Snu 
 
 
-def S_ff_withStar(nu, R, D, Te, Ts, n, H=None):
+def S_ff_withStar(nu, R, T, n, T_s, D, H=None, R_s=None):
     '''Free-free spectrum from a hot spot + star behind it.
 
     Input:
     nu = frequency in Hz
-    R = source size in cm
+    R, R_s = hot spot and stellar size in cm (default: R_s=R_h)
+    T, T_s = hot spot and stellar electron temperature in Kelvin
+    n = hot spot gas density in cm^-3
     D = source distance in cm
-    Te = electron temperature in Kelvin
-    n = gas density in cm^-3
-    H = linear depth of the source in cm (default: 0.1*R)
+    H = linear depth of the hot spot in cm (default: 0.1*R)
     
     Output:
     S_nu = flux density in Jy
     '''
     H = H if H is not None else 0.1 * R
+    R_s = R_s if R_s is not None else R
+
+    if R_s < R:
+        print('WARNING: R_s < R!')
 
     # Calculate the stellar flux behind the hot spot region and correct for absorption 
-    norm = np.pi * (R/D)**2
-    tau = tau_ff(nu, R, D, Te, n, H)
-    S_star = S_BB(nu/nsc, R, Ts, D) * np.exp(-tau) 
+    tau = tau_ff(nu, R, T, n, H) 
+    S_star = S_BB(nu/nsc, R, T_s, D) * np.exp(-tau)
+
+    # If R_s > R_h, there is also unabsorbed stellar emission.
+    if R_s > R:
+        S_star += S_BB(nu/nsc, R_s, T_s, D) - S_BB(nu/nsc, R, T_s, D)
 
     # Return the total flux of the star + hot spot
-    Snu = S_star + S_ff(nu, R, D, Te, n, H)
+    Snu = S_star + S_ff(nu, R, D, T, n, H)
 
     return Snu 
 
