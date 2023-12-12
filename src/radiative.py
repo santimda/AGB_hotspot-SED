@@ -40,6 +40,35 @@ def S_BB(nu, R, T, D):
     return S
 
 
+def tau_ff(nu, R, D, Te, n, H=None):
+    '''Free-free opacity from an homogeneous cylindrical region with radius and height equal to R.
+    It assumes n_i = n_e = n.
+    Formulae in Olnon 1975 ( https://articles.adsabs.harvard.edu/pdf/1975A%26A....39..217O )
+    
+    Input:
+    nu = frequency in Hz
+    R = source size in cm
+    D = source distance in cm
+    T_e = electron temperature in Kelvin
+    n = gas density in cm^-3
+    H = linear depth of the source in cm (default: 0.1*R)
+    
+    Output:
+    tau_nu = 1-D np.array with the opacities at the frequencies nu
+    '''
+    H = H if H is not None else 0.1 * R
+
+    # Transform units and calculate the opacity (these are usually 1-D np.arrays)
+    nu_GHz = nu / 1e9 
+    f = 8.235e-2 * Te**(-1.35) * np.power(nu_GHz, -2.1) / pc # Eq.4 is in [cm^6 pc^-1]
+    p = 2 * n**2 * H * f  # Eq. 10
+
+    # For very small values of p, 1-exp(-p) ~ p, which is better numerically
+    opac = np.where(p > 1e-3, 1.0 - np.exp(-p), p)
+
+    return opac
+
+
 def S_ff(nu, R, D, Te, n, H=None):
     '''Free-free spectrum from an homogeneous cylindrical region with radius and height equal to R.
     It assumes n_i = n_e = n.
@@ -56,25 +85,19 @@ def S_ff(nu, R, D, Te, n, H=None):
     Output:
     S_nu = flux density in Jy
     '''
-    
     H = H if H is not None else 0.1 * R
 
-    #Transform units
-    nu_GHz = nu / 1e9 # Note that this is usually a vector of size m! 
-    m = len(nu)
+    # Calculate the opacity vector
+    opac = tau_ff(nu, R, D, Te, n, H)
+
+    # Calculate the BB emission
+    norm = np.pi * (R/D)**2
+    S_BB = nBB(nu/nsc, norm, Te)
+
+    # Correct the SED for the effective opacity
+    Snu = ( S_BB * opac ) / Jy 
     
-    fs = 8.235e-2 * Te**(-1.35) * nu_GHz**(-2.1) / pc # Eq.4 is in [cm^6 pc^-1]
-#     cte_Snu = 2 * np.pi * k_B * Te * R**2 / (c**2 * D**2) # First part in Eq. 11
-    ps = [2 * n**2 * H * f for f in fs] # Eq. 10
-    Snu = []
-    for i in range(m):
-        opac = 1. - np.exp(-ps[i]) if ps[i] > 1e-3 else ps[i] 
-#         S = cte_Snu * nu[i]**2 * opac * Jy # Eq. 11 Olnon 1975 for sphere (in Jy)
-        cte_Snu = nBB(nu[i]/nsc, np.pi*R**2/(D**2), Te)
-        S = cte_Snu * opac / Jy # Eq. 11 Olnon 1975 for sphere (in Jy)
-        Snu.append(S)
-    
-    return Snu # in Jy
+    return Snu 
 
 
 def CircumstellarDustExtinction(Snu_start,nu,Mdot_dust,vExp,Rin,Rout,kappaFile, dustFolder="../dust_opacities/"):
@@ -95,7 +118,6 @@ def CircumstellarDustExtinction(Snu_start,nu,Mdot_dust,vExp,Rin,Rout,kappaFile, 
     kappa = f(nu)
     
     Mdot_dust = Mdot_dust * M_sun_yr
-    #vExp = vExp * 1E3  # Convert from km/s to m/s
     vExp = vExp * 1E5  # Convert from km/s to cm/s
     
     N_dust = Mdot_dust/(2*np.pi*vExp)*((1.0/Rin) - (1.0/Rout)) #in g/cm^2
