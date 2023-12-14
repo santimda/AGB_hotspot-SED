@@ -134,7 +134,7 @@ def S_ff_withStar(nu, R, T, n, T_s, D, H=None, R_s=None):
     return Snu 
 
 
-def CircumstellarDustExtinction(Snu_start,nu,Mdot_dust,vExp,Rin,Rout,kappaFile, dustFolder="../dust_opacities/"):
+def CircumstellarDustExtinction(Snu_start,nu,Mdot_dust,vExp,Rin,Rout,kappaFile="0.09mu-0.11mu_MgFeSiO4_dens_HSD_new.opacity", dustFolder="../dust_opacities/"):
     ''' Routine to correct an SED for dust extinction.
 
     Input: 
