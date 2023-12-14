@@ -60,3 +60,9 @@ def Omega_beam(theta1, theta2):
     Use the equation here: https://science.nrao.edu/facilities/vla/proposing/TBconv'''
     return pi * theta1 * theta2 / (4 * np.log(2))
 
+def calc_T_hs(T_star, T_beam, x):
+    # The temperature of the hot spot has to be consistent with the assumed stellar temperature 
+    # and the average temperature measured in the beam (T_beam). When x=x_max, T_hot = T_beam
+    return T_star + (T_beam - T_star)/x**2
+
+
